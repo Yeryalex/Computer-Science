@@ -110,18 +110,13 @@ class LinkedList {
 
   insertAt(index, key, value) {
     if (index < 0 || this.size() < index) throw new RangeError("Index out of bound");
-    // let newValues = [...values];
 
     if (index === 0) {
-    //   for (let i = newValues.length - 1; i >= 0; i--) {
         this.prepend(key, value);
-    //   }
       return ;
     }
     if (this.size() === index) {
-    //   for (let value of newValues){
         this.append(key, value);
-    //   }
       return;
     }
 
@@ -129,9 +124,7 @@ class LinkedList {
     let temp = this.at(index - 1)
     this.node = this.at(index);
 
-    // for (let i = newValues.length - 1; i >= 0; i--) {
       this.prepend(key, value);
-    // }
     temp.nextNode = this.node;
     this.node = firstPos;
   }
@@ -143,17 +136,19 @@ class LinkedList {
       this.pop();
       return ;
     }
-    if (index === this.size()) {
-      let temp = this.node;
-      this.node = this.at(index - 1);
-      this.node.nextNode = null;
-      this.node = temp;
-    }
-    let firstPos = this.node;
-    let temp = this.at(index - 1);
-    this.node = this.at(index + 1);
 
-    temp.nextNode = this.node;
+    let firstPos = this.node;
+    let head = this.node;
+    let afterNode = this.at(index + 1);
+    let removeNode = this.at(index - 1);
+    
+    removeNode.nextNode = null;
+
+    while (head.nextNode){
+        head = head.nextNode;
+    }
+
+    if (afterNode) head.nextNode = removeNode;
     this.node = firstPos;
   }
 }
@@ -192,7 +187,7 @@ class HashMap {
         if (hashCode > Number.MAX_SAFE_INTEGER) {
             throw new Error("Key value is too Long");
         }
-        let index = hashCode % 16;
+        let index = hashCode % this.capacity;
         if (index < 0 || index >= this.buckets.length) {
             throw new Error("Trying to access index out of bounds");
         }
@@ -206,12 +201,15 @@ class HashMap {
             let foundIndex = head.findIndex(key);
 
             if (foundIndex >= 0) {
-            head.removedAt(foundIndex);
-            head.insertAt(foundIndex, key, value);
-            return ;
-            }else {
+                head.removedAt(foundIndex);
+                head.insertAt(foundIndex, key, value);
+                return ;
+            }
             head.prepend(key, value);
-
+            this.limitCapacity += 1;
+            if (this.limitCapacity > this.capacity * this.loadFactor){
+                this.capacity *= 2;
+                this.buckets.length = this.capacity;
             }
         }else {
             this.buckets[index] = list;
@@ -222,15 +220,119 @@ class HashMap {
             }
         }
     }
+    get(key) {
+        let hashCode = this.hash(key);
+        if (hashCode > Number.MAX_SAFE_INTEGER) {
+            throw new Error("Key value is too Long");
+        }
+        let index = hashCode % this.capacity;
+        if (this.buckets[index]) {
+            let head = this.buckets[index];
+            let foundIndex = head.findIndex(key);
+            if (foundIndex >= 0) {
+                return head.at(foundIndex).value;
+            }
+        }
+        return undefined;
+    }
+    has(key){
+        let hashCode = this.hash(key);
+        if (hashCode > Number.MAX_SAFE_INTEGER) {
+            throw new Error("Key value is too Long");
+        }
+        let index = hashCode % this.capacity;
+        if (this.buckets[index]) {
+            let head = this.buckets[index];
+            return head.contains(key);
+        }
+        return false;
+    }
+    remove(key){
+        let hashCode = this.hash(key);
+        if (hashCode > Number.MAX_SAFE_INTEGER) {
+            throw new Error("Key value is too Long");
+        }
+        let index = hashCode % this.capacity;
+        if (this.buckets[index]) {
+            let head = this.buckets[index];
+            let foundIndex = head.findIndex(key);
+            if (foundIndex >= 0) {
+                head.removedAt(foundIndex);
+                return true;
+            }
+        }
+        return false;
+    }
+    length(){
+        let counter = 0;
+        let head = this.buckets;
+        for (let value of head) {
+            if (value) {
+                counter += value.size();
+            }
+        }
+        return counter;
+    }
+    clear() {
+        this.buckets.length = 0;
+        this.capacity = 16;
+        this.buckets.length = this.capacity;
+        this.limitCapacity = 0;
+    }
+    keys() {
+
+        let allKeys = [];
+        let buckets = this.buckets;
+        for (let value of buckets) {
+            if (value) {
+                let head = value.node;
+                while (head) {
+                    allKeys.push(head.key);
+                    if (head.nextNode === null) break;
+                    head = head.nextNode;
+                }
+            }
+        }
+        return allKeys;
+    }
+    values() {
+        let allValues = [];
+        let buckets = this.buckets;
+        for (let value of buckets) {
+            if (value) {
+                let head = value.node;
+                while (head) {
+                    allValues.push(head.value);
+                    if (head.nextNode === null) break;
+                    head = head.nextNode;
+                }
+            }
+        }
+        return allValues;
+    }
+
+    entries() {
+        let allEntries = [];
+        let buckets = this.buckets;
+        for (let value of buckets) {
+            if (value) {
+                let head = value.node;
+                while (head) {
+                    allEntries.push([head.key, head.value]);
+                    if (head.nextNode === null) break;
+                    head = head.nextNode;
+                }
+            }
+        }
+        return allEntries;
+    }
 
     printHashMap() {
         for (let value of this.buckets){
-        if (value) console.log(value.size());
-    }
+            if (value) console.log(value.head());
+        }
     }
 }
-
-
 
 
 let test = new HashMap();
@@ -247,74 +349,134 @@ test.set('ice cream', 'white')
 test.set('jacket', 'blue')
 test.set('kite', 'pink')
 test.set('lion', 'golden')
-test.set('aapple', 'red')
-test.set('abanana', 'yellow')
-test.set('acarrot', 'orange')
-test.set('adog', 'brown')
-test.set('aelephant', 'gray')
-test.set('afrog', 'green')
-test.set('agrape', 'purple')
-test.set('ahat', 'black')
-test.set('aice cream', 'white')
-test.set('ajacket', 'blue')
-test.set('akite', 'pink')
-test.set('alion', 'golden')
 
-test.set('aapple', 'red')
-test.set('abanana', 'yellow')
-test.set('acarrot', 'orange')
-test.set('adog', 'brown')
-test.set('aelephant', 'gray')
-test.set('afrog', 'green')
-test.set('agrape', 'purple')
-test.set('ahat', 'black')
-test.set('aice cream', 'white')
-test.set('ajacket', 'blue')
-test.set('akite', 'pink')
-test.set('alion', 'golden')
-test.set('asalion', 'golden')
-test.set('alisaon', 'golden')
-test.set('alioan', 'golden')
-test.set('alioasan', 'golden')
-test.set('alioasan', 'golden')
-test.set('alioasan', 'golden')
-test.set('alioasan', 'golden')
-test.set('asan', 'golden')
-test.set('an', 'golden')
-test.set('abn', 'golden')
-test.set('anc', 'golden')
-test.set('and', 'golden')
-test.set('zalioan', 'golden')
-test.set('azlioasan', 'golden')
-test.set('alxxioasan', 'golden')
-test.set('alzxioasan', 'golden')
-test.set('alixzoasan', 'golden')
-test.set('asanxz', 'golden')
-test.set('xzan', 'golden')
-test.set('axzbn', 'golden')
-test.set('anxzc', 'golden')
-test.set('andxza', 'golden')
-test.set('andxzab', 'golden')
+
+console.log(test.get("lion"))
+console.log(test.get("kite"))
+console.log(test.get("grape"))
+console.log(test.get("hat"))
+
+console.log(test.has("lion"))
+console.log(test.has("kite"))
+console.log(test.has("grsape"))
+console.log(test.has("hsat"))
+console.log(test.has("hsatasaaaa"))
+
+test.remove("hat");
+test.remove("grape");
+test.remove("elephant")
+test.remove("kite")
+test.remove("lion")
+test.remove("dog")
+
+test.set('apple', 'red')
+test.set('banana', 'yellow')
+test.set('carrot', 'orange')
+test.set('dog', 'brown')
+test.set('elephant', 'gray')
+test.set('frog', 'green')
+test.set('grape', 'purple')
+test.set('hat', 'black')
+test.set('ice cream', 'white')
+test.set('jacket', 'blue')
+test.set('kite', 'pink')
+test.set('lion', 'golden')
 
 test.printHashMap()
-console.log(test.limitCapacity);
-console.log(test.buckets.length);
+
+
+console.log("Stored keys in current hashMap:", test.length())
+
+test.clear();
+console.log("==============================\n")
+test.printHashMap();
 
 
 
+test.set('apple', 'red')
+test.set('banana', 'yellow')
+test.set('carrot', 'orange')
+test.set('dog', 'brown')
+test.set('elephant', 'gray')
+test.set('frog', 'green')
+test.set('grape', 'purple')
+test.set('hat', 'black')
+test.set('ice cream', 'white')
+test.set('jacket', 'blue')
+test.set('kite', 'pink')
+test.set('lion', 'golden')
 
 
+test.printHashMap();
+console.log("==============================\n")
+
+test.set('apple', 'red')
+test.set('banana', 'yellow')
+test.set('carrot', 'orange')
+test.set('dog', 'brown')
+test.set('elephant', 'gray')
+test.set('frog', 'green')
+test.set('grape', 'purple')
+test.set('hat', 'black')
+test.set('ice cream', 'white')
+test.set('jacket', 'blue')
+test.set('kite', 'pink')
+test.set('lion', 'golden')
+
+test.clear()
+test.printHashMap();
+test.set('apple', 'red')
+test.set('banana', 'yellow')
+test.set('carrot', 'orange')
+test.set('dog', 'brown')
+test.set('elephant', 'gray')
+test.set('frog', 'green')
+test.set('grape', 'purple')
+test.set('hat', 'black')
+test.set('ice cream', 'white')
+test.set('jacket', 'blue')
+test.set('kite', 'pink')
+test.set('lion', 'golden')
+console.log(test.length())
+console.log(test.keys())
+
+test.printHashMap();
+console.log(test.values())
+console.log(test.entries())
+console.log(test.length())
+test.set('apple', 'red')
+test.set('banana', 'yellow')
+test.set('carrot', 'orange')
+test.set('dog', 'brown')
+test.set('elephant', 'gray')
+test.set('frog', 'green')
+test.set('grape', 'purple')
+test.set('hat', 'black')
+test.set('ice cream', 'white')
+test.set('jacket', 'blue')
+test.set('kite', 'pink')
+test.set('lion', 'golden')
+console.log(test.length())
+
+test.set('sasmoon', 'silver')
+test.set('sasmoson', 'silver')
+test.set('sassamoon', 'silver')
+test.set('amoon', 'silver')
+test.set('sabmoon', 'silver')
+test.set('csamhgn', 'silver')
+test.set('dssghgoon','silver')
+test.set('sahgoon', 'silver')
+test.set('sahson', 'silver')
+test.set('sassan', 'silver')
+test.set('amoon', 'silver')
+test.set('sabmoon', 'silver')
+test.set('csamoon', 'silver')
+test.set('dssmoon', 'silver')
 
 
+console.log(test.entries())
+console.log(test.length())
+console.log(test.capacity)
+console.log(test.limitCapacity)
 
-
-
-
-
-
-
-
-
-
-
-
+test.printHashMap()
