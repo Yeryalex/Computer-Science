@@ -14,10 +14,7 @@ class Tree {
     #valueIncluded = false;
     #sortArray(array) {
         let set = new Set(array);
-        let sortedArray = [];
-        set.forEach(e => {
-            sortedArray.push(e);
-        })
+        let sortedArray = [...set];
         sortedArray.sort((a, b) => a - b);
         return sortedArray;
     }
@@ -152,6 +149,19 @@ class Tree {
         this.#deleteRec(this.root, value)
     }
 
+    levelOrderForEach(callback) {
+        if (typeof callback !== "function") throw new Error("No callback function provided.");
+        let queue = [];
+
+        queue.push(this.root);
+        while (queue.length) {
+            let currentNode = queue[0];
+            callback(currentNode.data);
+            if (currentNode.left) queue.push(currentNode.left);
+            if (currentNode.right) queue.push(currentNode.right);
+            queue.shift()
+        }
+    }
 }
 
 
@@ -186,21 +196,9 @@ test.deleteItem(323)
 test.deleteItem(7)
 test.deleteItem(23);
 
-// test.deleteItem(45);
-// test.deleteItem(53);
-// test.deleteItem(3);
-// test.deleteItem(54);
-// test.deleteItem(68);
-// test.deleteItem(-32);
-// test.deleteItem(-2);
-// test.deleteItem(-1);
-// test.deleteItem(32);
-// test.deleteItem(76);
 
-// test.insert(101)
-// test.deleteItem(98);
-// test.deleteItem(4);
-// test.deleteItem(5);
-// test.deleteItem(9);
+prettyPrint(test.root)
 
+
+test.levelOrderForEach((e) => console.log(e));
 prettyPrint(test.root)
