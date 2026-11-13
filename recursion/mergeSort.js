@@ -7,7 +7,7 @@ function merge(array, left, mid, right) {
     let j = 0;
     let k = left;
 
-    console.log(leftSide, rightSide)
+    // console.log(leftSide, rightSide)
     while (i < leftSide.length && j < rightSide.length) {
         if (leftSide[i] <= rightSide[j]){
             array[k] = leftSide[i]
@@ -43,5 +43,11 @@ function mergeSort(array, left = 0, right = array.length){
 }
 
 let test = [38, 27, 43, 3, 9, 82, 10];
+let test1 = [38, 27, 43, 3, 9, 82, 10];
 
-mergeSort(test);
+let t0 = performance.now();
+test.sort()
+let t1 = performance.now();
+console.log(t1 - t0)
+
+

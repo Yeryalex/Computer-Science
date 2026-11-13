@@ -203,4 +203,3 @@ list.insertAt(0, "turtle", "snake");
 console.log("\nTurtle and Snake came back. (current list):\n", list.toString());
 list.removedAt(0);
 console.log("\nTurtle removed. (current list):\n", list.toString());
-
